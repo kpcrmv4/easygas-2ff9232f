@@ -1813,10 +1813,9 @@ function renderHandRows() {
       const dis = used.has(r);
       opts += `<option value="${r}" ${k === r ? 'selected' : ''} ${dis ? 'disabled' : ''}>งวด ${r} · ${thDate(rr ? rr.date : '')}${isLocked(r) ? ' (จริง)' : ''}${dis ? ' — มืออื่นเลือกแล้ว' : ''}</option>`;
     }
-    return `<div class="flex items-center gap-3">
-      <span class="chip-gold shrink-0 !py-2 w-16 text-center">มือ ${i + 1}</span>
-      <select class="field" data-hand-idx="${i}" aria-label="งวดที่มือ ${i + 1} เปีย">${opts}</select>
-      <span class="shrink-0 text-sm muted w-20 text-right">${k ? 'ดอก ' + money(sim.bids[k]) : '-'}</span>
+    return `<div class="flex items-center gap-2">
+      <span class="chip-gold shrink-0 !py-2 !px-2 w-14 text-center">มือ ${i + 1}</span>
+      <select class="field flex-1 min-w-0" data-hand-idx="${i}" aria-label="งวดที่มือ ${i + 1} เปีย">${opts}</select>
     </div>`;
   }).join('');
 }
