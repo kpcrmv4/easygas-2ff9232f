@@ -696,6 +696,8 @@
             <span>เลื่อนวันที่ของงวดถัดไปทั้งหมดตามไปด้วย <span id="m-shift-days" class="muted"></span></span>
           </label>
         </div>
+        <div id="m-wait" class="hidden rounded-2xl p-4 text-sm bg-blue-50 text-blue-800 dark:bg-blue-500/10 dark:text-blue-200 leading-relaxed"></div>
+        <div id="m-result-fields" class="space-y-4">
         <div class="flex items-center gap-3 rounded-2xl p-3 border row-line">
           <label class="switch"><input type="checkbox" id="m-mine" aria-label="เป็นมือของฉัน"><span></span></label>
           <div class="flex-1 text-sm font-semibold"><i class="fa-solid fa-crown text-amber-500"></i> เป็นมือของฉัน</div>
@@ -718,6 +720,7 @@
             <button type="button" class="chip" data-bid-quick="50">+50</button>
           </div>
           <p class="text-xs muted mt-2" id="m-hint"></p>
+        </div>
         </div>
         <div class="flex flex-col-reverse sm:flex-row gap-2 pt-2">
           <button type="button" id="btn-m-clear" class="btn-ghost text-rose-500 hidden"><i class="fa-solid fa-eraser"></i>ล้างผลงวดนี้</button>
@@ -1092,6 +1095,7 @@ function renderHome() {
   const cards = [
     statCard({
       icon: 'fa-hourglass-half', tone: cd && cd.late ? TONES.amber : TONES.blue, label: M.next ? 'งวดถัดไป (งวดที่ ' + M.next.round + ')' : 'งวดถัดไป',
+      badge: M.next ? `<button type="button" data-edit-round="${M.next.round}" class="chip !py-1 !px-3 text-xs" aria-label="เลื่อนวันเปียงวดที่ ${M.next.round}"><i class="fa-solid fa-calendar-days"></i> ${daysBetween(todayBkk(), M.next.date) > 0 ? 'เลื่อนวัน' : 'บันทึก'}</button>` : '',
       value: M.next ? `<span data-countdown="${M.next.date}">${cd.text}</span>` : 'ครบทุกงวดแล้ว',
       cls: cd && cd.late ? 'text-amber-500' : '',
       sub: M.next ? thDate(M.next.date, true) + (cd.late ? ' · ยังไม่บันทึกผล' : '') : 'วงนี้เปียครบแล้ว'
@@ -1166,6 +1170,7 @@ function renderHome() {
         </div>
         <div class="text-4xl md:text-5xl font-bold mt-1 tracking-tight"><span data-count="${M.proj.totalNet}" data-signed="1">0</span> <span class="text-lg font-medium">บาท</span></div>
         <div class="text-sm text-white/85 mt-1">สุทธิถึงวันนี้ ${signed(M.toDate)} บาท · จ่ายแล้ว ${money(M.paidToDate)} · รับแล้ว ${money(M.recvToDate)}</div>
+        ${M.proj.hands.some(h => !M.won[h.hand] && h.round) ? `<div class="text-xs text-white/75 mt-1">สมมติมือที่ยังไม่เปียได้งวด ${M.proj.hands.filter(h => !M.won[h.hand] && h.round).map(h => h.round).sort((a, b) => a - b).join(', ')} · งวดที่ยังไม่ถึงดอก ${money(s.minBid)} — แตะ <i class="fa-solid fa-info"></i> ดูวิธีคิด</div>` : ''}
         <div class="mt-4 flex items-center gap-3">
           <div class="flex-1 h-2.5 rounded-full bg-white/25 overflow-hidden"><div class="h-full rounded-full bg-white" style="width:${(pct * 100).toFixed(1)}%"></div></div>
           <span class="text-sm font-semibold">งวด ${done}/${N}</span>
@@ -1187,18 +1192,27 @@ function renderHome() {
 }
 
 function explainProjection() {
-  const s = S.data.settings;
+  const s = S.data.settings, M = S.M;
+  const rows = M.proj.hands.map(h => {
+    const real = !!M.won[h.hand];
+    return `<tr class="border-t"><td class="py-1.5">มือ ${h.hand}</td><td>${h.round ? 'งวด ' + h.round + (real ? '' : ' <span class="opacity-60">(สมมติ)</span>') : '-'}</td>
+      <td class="text-right">${money(h.receive)}</td><td class="text-right">${money(h.paid)}</td><td class="text-right font-bold ${plClass(h.net)}">${signed(h.net)}</td></tr>`;
+  }).join('');
   Swal.fire({
-    title: 'วิธีคิด (แชร์ดอกตาม)',
+    title: 'ตัวเลขนี้มาจากไหน',
     icon: 'info',
+    width: 560,
     confirmButtonColor: ACCENT,
     confirmButtonText: 'เข้าใจแล้ว',
     html: `<div class="text-left text-sm leading-relaxed">
-      • มือที่ยังไม่เปีย จ่ายงวดละ <b>${money(s.handAmount)}</b> บาท<br>
-      • มือที่เปียแล้ว จ่ายงวดละ <b>${money(s.handAmount)} + ดอกที่ตัวเองใส่</b><br>
-      • คนเปียงวดใด ได้รับ (จำนวนมือ − 1) × ${money(s.handAmount)} + ดอกสะสมของงวดก่อนหน้า<br><br>
-      <b>ตัวเลขคาดการณ์</b> ใช้ดอกจริงของงวดที่บันทึกแล้ว ส่วนงวดที่ยังไม่ถึงใช้ดอกขั้นต่ำ ${money(s.minBid)} บาท
-      และสมมติว่ามือที่ยังไม่เปียของคุณเปียช่วงท้ายวง — อยากลองแบบอื่นไปที่หน้า "จำลอง"</div>`
+      <table class="w-full text-xs mb-2"><thead><tr class="opacity-70"><th class="text-left">มือ</th><th class="text-left">เปีย</th><th class="text-right">ได้รับ</th><th class="text-right">จ่ายรวม</th><th class="text-right">สุทธิ</th></tr></thead>
+      <tbody>${rows}<tr class="border-t font-bold"><td colspan="4" class="py-1.5">รวม</td><td class="text-right ${plClass(M.proj.totalNet)}">${signed(M.proj.totalNet)}</td></tr></tbody></table>
+      <b>สมมติฐาน</b><br>
+      • มือที่ยังไม่เปีย สมมติว่าได้งวดท้ายวง (กรณีดีที่สุด เพราะได้ดอกของคนอื่นสะสมมากที่สุด)<br>
+      • งวดที่ยังไม่บันทึก ใช้ดอกขั้นต่ำ ${money(s.minBid)} บาททุกงวด<br>
+      • ได้รับ = (${s.totalHands} − 1) × ${money(s.handAmount)} + ดอกสะสมของงวดก่อนหน้า<br>
+      • จ่ายรวม = มือเป็นจ่าย ${money(s.handAmount)}/งวด, มือตายจ่าย ${money(s.handAmount)} + ดอกตัวเอง/งวด<br><br>
+      ถ้าเปียเร็ว ตัวเลขจะลดลง/ติดลบ — ลองเปลี่ยนงวดที่เปียได้ที่หน้า "จำลอง"</div>`
   });
 }
 
@@ -1280,7 +1294,7 @@ function renderTimeline() {
       const c = countdown(r.date);
       const sub = r.winner
         ? 'ดอก ' + money(r.bid) + ' บาท'
-        : (st === 'next' ? `<span data-countdown="${r.date}">${c.text}</span>` : st === 'late' ? 'เลยวันแล้ว แตะเพื่อบันทึกผล' : 'แตะเพื่อแก้วันที่/บันทึกผล');
+        : (st === 'next' ? `<span data-countdown="${r.date}">${c.text}</span>` : st === 'late' ? 'เลยวันแล้ว แตะเพื่อบันทึกผล' : 'แตะเพื่อเลื่อนวันเปีย');
       const avatar = r.myHand ? TONES.amber : r.winner ? TONES.violet : 'bg-slate-100 text-slate-400 dark:bg-white/5';
       return `<div class="tl-item ${st} mb-3">
         <span class="tl-dot"></span>
@@ -2060,6 +2074,7 @@ function validateSettingsForm(f) {
   if (f.frequency === 'twice' && (!int(f.day2) || f.day2 < 1 || f.day2 > 31 || f.day2 === f.day1)) e['set-day2'] = '1–31 และไม่ซ้ำวันแรก';
   if (isNaN(parseYmd(f.startDate))) e['set-start'] = 'เลือกวันเริ่ม';
   if (f.firstDone && !f.firstWinner) e['set-first-winner'] = 'กรอกชื่อผู้ได้งวดแรก (หรือปิดสวิตช์ถ้ายังไม่เปีย)';
+  else if (f.firstDone && S.draft[0] && S.draft[0] > todayBkk()) e['set-first-winner'] = 'งวดแรกยังไม่ถึงวันเปีย ปิดสวิตช์ไว้ก่อน แล้วบันทึกผลเมื่อถึงวัน';
   if (f.firstDone && !(f.firstBid >= 0)) e['set-first-bid'] = 'ต้องเป็น 0 ขึ้นไป';
   return e;
 }
@@ -2153,7 +2168,10 @@ function openModal(id) {
   if (m.hidden) S.lastFocus = document.activeElement;
   m.hidden = false;
   requestAnimationFrame(() => m.classList.add('open'));
-  setTimeout(() => { const f = $('#m-winner', m); if (f) f.focus(); }, 60);
+  setTimeout(() => {
+    const f = ['#m-winner', '#m-date'].map(s => $(s, m)).find(el => el && el.offsetParent !== null);
+    if (f) f.focus();
+  }, 60);
 }
 function closeModal() {
   const m = $('.modal:not([hidden])');
@@ -2202,7 +2220,43 @@ function fillRoundForm(n) {
   $('#m-bid').value = r.winner ? r.bid : '';
   $('#btn-m-clear').classList.toggle('hidden', !r.winner);
   const pot = S.M.proj.rounds[r.round - 1] ? S.M.proj.rounds[r.round - 1].pot : 0;
-  $('#m-hint').innerHTML = `ดอกขั้นต่ำ ${money(s.minBid)} บาท · ผู้เปียงวดนี้ได้รับประมาณ ${money(pot)} บาท<br>เว้นชื่อว่าง = งวดนี้ยังไม่มีผู้เปีย (แก้แค่วันที่)`;
+  $('#m-hint').innerHTML = `ดอกขั้นต่ำ ${money(s.minBid)} บาท · ผู้เปียงวดนี้ได้รับประมาณ ${money(pot)} บาท`;
+  updateModalMode();
+}
+
+/** เหตุที่ยังบันทึกผลงวดนี้ไม่ได้ ('' = บันทึกได้): ต้องถึงวันเปีย และงวดก่อนหน้าบันทึกครบ */
+function recordBlock(r, date) {
+  const prevMissing = S.data.rounds.find(x => x.round < r.round && !x.winner);
+  if (prevMissing) return 'ต้องบันทึกผลงวดที่ ' + prevMissing.round + ' ก่อน จึงจะบันทึกงวดนี้ได้';
+  if (!isNaN(parseYmd(date)) && date > todayBkk()) return 'ยังไม่ถึงวันเปีย (' + countdown(date).text + ') บันทึกผลได้เมื่อถึงวัน';
+  return '';
+}
+
+/** โหมดของหน้าต่าง: บันทึกผล หรือ เลื่อนวันเปียอย่างเดียว (ยังไม่ถึงวัน) */
+function updateModalMode() {
+  const r = S.modalRound;
+  if (!r) return;
+  const date = $('#m-date').value;
+  const block = recordBlock(r, date);
+  const wait = $('#m-wait');
+  const dateOnly = !!block && !r.winner;
+  $('#m-result-fields').classList.toggle('hidden', dateOnly);
+  if (dateOnly) {
+    wait.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> ${esc(block)}<br><span class="text-xs opacity-80">ตอนนี้แก้/เลื่อนวันเปียของงวดนี้ได้ ถ้าเลื่อนมาเป็นวันนี้หรือก่อนหน้า จะบันทึกผลได้ทันที</span>`;
+  } else if (r.winner && !isNaN(parseYmd(date)) && date > todayBkk()) {
+    wait.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> งวดนี้บันทึกผลแล้ว จึงเลื่อนไปหลังวันนี้ไม่ได้';
+  } else {
+    wait.innerHTML = '';
+  }
+  wait.classList.toggle('hidden', !wait.innerHTML);
+  $('#round-modal-title').innerHTML = dateOnly
+    ? `<i class="fa-solid fa-calendar-days text-violet-500"></i> วันเปียงวดที่ ${r.round}`
+    : `<i class="fa-solid fa-pen-to-square text-violet-500"></i> ${r.winner ? 'แก้ไข' : 'บันทึก'}งวดที่ ${r.round}`;
+  $('#btn-m-save').innerHTML = dateOnly ? '<i class="fa-solid fa-calendar-check"></i>บันทึกวันที่' : '<i class="fa-solid fa-check"></i>บันทึก';
+}
+
+function laterRecorded(r) {
+  return S.data.rounds.find(x => x.round > r.round && x.winner) || null;
 }
 
 function renderHandSelect(r) {
@@ -2231,20 +2285,32 @@ function onModalDateChange() {
   const v = $('#m-date').value;
   const delta = r && r.date && !isNaN(parseYmd(v)) ? daysBetween(r.date, v) : 0;
   const hasLater = r && r.round < S.data.settings.totalHands;
-  $('#m-shift-wrap').classList.toggle('hidden', !(delta && hasLater));
+  const wrap = $('#m-shift-wrap');
+  const wasHidden = wrap.classList.contains('hidden');
+  wrap.classList.toggle('hidden', !(delta && hasLater));
+  // เลื่อนงวดที่ยังไม่เปีย → ปกติงวดถัดไปก็เลื่อนตาม จึงติ๊กไว้ให้ก่อน (เอาออกได้)
+  if (wasHidden && delta && hasLater && r && !r.winner) $('#m-shift').checked = true;
   $('#m-shift-days').textContent = delta ? '(' + (delta > 0 ? '+' : '') + delta + ' วัน)' : '';
+  updateModalMode();
 }
 
 async function saveRoundFlow(e) {
   if (e) e.preventDefault();
   const r = S.modalRound, s = S.data.settings, form = $('#round-form');
   const date = $('#m-date').value;
-  const mine = $('#m-mine').checked;
+  const dateOnly = $('#m-result-fields').classList.contains('hidden');
+  const mine = !dateOnly && $('#m-mine').checked;
   const hand = mine ? parseInt($('#m-hand').value, 10) || 0 : 0;
-  let winner = $('#m-winner').value.trim();
+  let winner = dateOnly ? '' : $('#m-winner').value.trim();
   const bidRaw = $('#m-bid').value.trim();
   const errs = {};
   if (isNaN(parseYmd(date))) errs['m-date'] = 'เลือกวันที่';
+  else if (!dateOnly && (winner || mine)) {
+    const block = recordBlock(r, date);
+    if (block) errs['m-date'] = block;
+  }
+  if (!dateOnly && !winner && !mine && r.winner && laterRecorded(r))
+    errs['m-winner'] = 'ล้างผลไม่ได้ เพราะงวดที่ ' + laterRecorded(r).round + ' บันทึกผลแล้ว';
   if (mine) {
     const used = S.data.rounds.some(x => x.winner && x.myHand === hand && x.round !== r.round);
     if (!hand || used) errs['m-hand'] = 'มือนี้เปียไปแล้ว เลือกมืออื่น';
@@ -2267,6 +2333,8 @@ async function saveRoundFlow(e) {
 async function clearRoundFlow() {
   const r = S.modalRound;
   if (!r || !r.winner) return;
+  const later = laterRecorded(r);
+  if (later) { showError('ล้างผลงวดนี้ไม่ได้ เพราะงวดที่ ' + later.round + ' บันทึกผลแล้ว ต้องล้างงวดหลังก่อน'); return; }
   if (!(await confirmBox('ล้างผลงวดนี้?', 'ชื่อผู้เปียและดอกของงวดที่ ' + r.round + ' จะถูกลบ (วันที่ยังอยู่)', 'ล้างผล', 'warning'))) return;
   await submitRound({ round: r.round, date: r.date, winner: '', bid: null, myHand: 0, shiftNext: false }, $('#btn-m-clear'), 'ล้างผลงวดที่ ' + r.round + ' แล้ว');
 }
