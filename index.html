@@ -550,7 +550,7 @@
       <section data-page="settings" id="page-settings" hidden>
         <div id="settings-welcome" class="hidden card p-5 mb-4 border-l-4 !border-l-violet-500">
           <div class="font-bold text-lg mb-1"><i class="fa-solid fa-hand-sparkles text-violet-500"></i> เริ่มต้นใช้งาน</div>
-          <p class="text-sm muted">กรอกข้อมูลวงแชร์ แล้วกด "สร้างวันที่อัตโนมัติ" ตรวจ/แก้วันที่ได้ตามต้องการ จากนั้นกด "บันทึกการตั้งค่า"</p>
+          <p class="text-sm muted">กรอกข้อมูลวงแชร์ เลือกวันเปียงวดแรกและความถี่ ระบบจะเรียงวันที่ทุกงวดให้ทันที ตรวจ/แก้วันที่ได้ตามต้องการ จากนั้นกด "บันทึกการตั้งค่า"</p>
         </div>
         <div class="grid lg:grid-cols-5 gap-4">
           <form id="settings-form" class="card p-5 lg:col-span-2 space-y-4" novalidate>
@@ -585,8 +585,15 @@
 
             <div class="pt-3 border-t row-line">
               <h3 class="font-semibold mb-3"><i class="fa-solid fa-flag-checkered text-violet-500"></i> งวดแรก (มือแรก)</h3>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <span class="switch"><input type="checkbox" id="set-first-done" aria-label="งวดแรกเปียไปแล้ว"><span></span></span>
+                <span class="text-sm font-semibold">งวดแรกเปียไปแล้ว</span>
+              </label>
+              <p id="first-off-hint" class="text-xs muted mt-2">ยังไม่เริ่มก็ปิดไว้ได้เลย พอถึงวันเปียงวดแรก ค่อยกดปุ่ม <i class="fa-solid fa-plus"></i> บันทึกเหมือนงวดอื่น</p>
+              <div id="first-fields" class="hidden mt-3">
               <label class="label" for="set-first-winner">ผู้ได้งวดแรก</label>
               <input id="set-first-winner" class="field" maxlength="40" list="names-list" placeholder="เช่น ท้าวแชร์">
+              <div class="err hidden" data-err-for="set-first-winner"></div>
               <div class="grid grid-cols-2 gap-3 mt-3">
                 <div>
                   <label class="label" for="set-first-bid">ดอกงวดแรก (บาท)</label>
@@ -598,39 +605,47 @@
                   <select id="set-first-myhand" class="field"></select>
                 </div>
               </div>
-              <p class="text-xs muted mt-2">เว้นชื่อว่างไว้ ถ้างวดแรกยังไม่ได้เปีย</p>
+              </div>
             </div>
 
             <div class="pt-3 border-t row-line">
               <h3 class="font-semibold mb-3"><i class="fa-solid fa-calendar-days text-violet-500"></i> วันเปีย</h3>
-              <input type="hidden" id="set-freq" value="monthly">
-              <div class="seg mb-3" role="group" aria-label="ความถี่">
-                <button type="button" data-freq="monthly">เดือนละ 1 ครั้ง</button>
-                <button type="button" data-freq="twice">เดือนละ 2 ครั้ง</button>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="label" for="set-day1">ทุกวันที่</label>
-                  <input id="set-day1" type="number" inputmode="numeric" min="1" max="31" class="field">
-                  <div class="err hidden" data-err-for="set-day1"></div>
-                </div>
-                <div id="day2-wrap">
-                  <label class="label" for="set-day2">และวันที่</label>
-                  <input id="set-day2" type="number" inputmode="numeric" min="1" max="31" class="field">
-                  <div class="err hidden" data-err-for="set-day2"></div>
-                </div>
-              </div>
-              <div class="mt-3">
-                <label class="label" for="set-start">เริ่มนับตั้งแต่วันที่</label>
+              <div>
+                <label class="label" for="set-start"><span class="inline-grid place-items-center w-5 h-5 rounded-full bg-violet-500 text-white text-[11px] mr-1">1</span>งวดแรกเปียวันที่</label>
                 <input id="set-start" type="date" class="field">
                 <div class="err hidden" data-err-for="set-start"></div>
+                <p class="text-xs muted mt-1">เลือกวันที่จะเปียงวดที่ 1 (ยังไม่ถึงก็เลือกล่วงหน้าได้)</p>
               </div>
-              <label class="flex items-center gap-2 text-sm mt-3 cursor-pointer">
-                <input type="checkbox" id="keep-recorded" class="w-4 h-4 accent-violet-600" checked>
-                คงวันที่ของงวดที่บันทึกผลแล้ว
-              </label>
-              <button type="button" id="btn-gen-dates" class="btn-ghost w-full mt-3"><i class="fa-solid fa-wand-magic-sparkles text-violet-500"></i>สร้างวันที่อัตโนมัติ</button>
-              <p class="text-xs muted mt-2">ถ้าวันที่ไม่มีในเดือนนั้น (เช่น 31) จะใช้วันสุดท้ายของเดือนแทน</p>
+              <div class="mt-4">
+                <span class="label"><span class="inline-grid place-items-center w-5 h-5 rounded-full bg-violet-500 text-white text-[11px] mr-1">2</span>งวดต่อไปเปียบ่อยแค่ไหน</span>
+                <input type="hidden" id="set-freq" value="monthly">
+                <div class="seg mb-3" role="group" aria-label="ความถี่">
+                  <button type="button" data-freq="monthly">เดือนละ 1 ครั้ง</button>
+                  <button type="button" data-freq="twice">เดือนละ 2 ครั้ง</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="label" for="set-day1">ทุกวันที่</label>
+                    <input id="set-day1" type="number" inputmode="numeric" min="1" max="31" class="field">
+                    <div class="err hidden" data-err-for="set-day1"></div>
+                  </div>
+                  <div id="day2-wrap">
+                    <label class="label" for="set-day2">และวันที่</label>
+                    <input id="set-day2" type="number" inputmode="numeric" min="1" max="31" class="field">
+                    <div class="err hidden" data-err-for="set-day2"></div>
+                  </div>
+                </div>
+                <p class="text-xs muted mt-2">ถ้าวันที่ไม่มีในเดือนนั้น (เช่น 31) จะใช้วันสุดท้ายของเดือนแทน</p>
+              </div>
+              <div id="date-preview" class="mt-4 rounded-2xl p-3 text-sm bg-violet-50 dark:bg-violet-500/10 leading-relaxed"></div>
+              <div id="regen-box" class="hidden">
+                <label class="flex items-center gap-2 text-sm mt-3 cursor-pointer">
+                  <input type="checkbox" id="keep-recorded" class="w-4 h-4 accent-violet-600" checked>
+                  คงวันที่ของงวดที่บันทึกผลแล้ว
+                </label>
+                <button type="button" id="btn-gen-dates" class="btn-ghost w-full mt-3"><i class="fa-solid fa-wand-magic-sparkles text-violet-500"></i>คำนวณวันที่ทุกงวดใหม่</button>
+                <p class="text-xs muted mt-2">วงเริ่มแล้ว ระบบจึงไม่เปลี่ยนวันที่ให้เอง กดปุ่มนี้ถ้าต้องการคำนวณใหม่ตามค่าด้านบน</p>
+              </div>
             </div>
           </form>
 
@@ -1869,8 +1884,11 @@ function renderSettings(force) {
   setVal('set-day2', s.day2);
   setVal('set-start', s.startDate || d.today);
   setFreq(s.frequency);
-  setVal('set-first-winner', r1 ? r1.winner : (s.configured ? '' : 'ท้าวแชร์'));
-  setVal('set-first-bid', r1 && r1.winner ? r1.bid : 0);
+  const firstDone = !!(r1 && r1.winner);
+  $('#set-first-done').checked = firstDone;
+  syncFirstFields();
+  setVal('set-first-winner', firstDone ? r1.winner : 'ท้าวแชร์');
+  setVal('set-first-bid', firstDone ? r1.bid : 0);
   fillFirstHandSelect(r1 && r1.winner ? r1.myHand : 0);
   $('#settings-welcome').classList.toggle('hidden', s.configured);
   S.draft = d.rounds.length ? d.rounds.map(r => r.date) : generateFromForm(s.totalHands);
@@ -1882,18 +1900,21 @@ function renderSettings(force) {
   S.settingsDirty = false;
 }
 
-/** สร้างวันที่ N งวด: เริ่มจากวันแรกที่ตรงกับวันเปียตั้งแต่ start (วันเกินเดือนใช้วันสุดท้ายของเดือน) */
+/**
+ * สร้างวันที่ N งวด: งวดแรก = start ตรง ๆ, งวดถัดไป = วันเปียที่ตั้งไว้ถัดจาก start
+ * (วันเกินเดือนใช้วันสุดท้ายของเดือน)
+ */
 function generateDates(start, freq, d1, d2, N) {
   if (isNaN(parseYmd(start)) || !(N > 0)) return [];
   const days = freq === 'twice' ? [d1, d2].filter(x => x >= 1 && x <= 31).sort((a, b) => a - b) : [d1];
   if (!days.length || !(days[0] >= 1)) return [];
   let y = +start.slice(0, 4), m = +start.slice(5, 7);
-  const out = [];
+  const out = [start];
   for (let guard = 0; out.length < N && guard < 1300; guard++) {
     const dim = daysInMonth(y, m);
     days.forEach(dd => {
       const s = ymd(y, m, Math.min(dd, dim));
-      if (s >= start && out.length < N && out.indexOf(s) < 0) out.push(s);
+      if (s > start && out.length < N && out.indexOf(s) < 0) out.push(s);
     });
     m++;
     if (m > 12) { m = 1; y++; }
@@ -1904,6 +1925,48 @@ function generateDates(start, freq, d1, d2, N) {
 function generateFromForm(N, from) {
   return generateDates(from || $('#set-start').value, $('#set-freq').value,
     parseInt($('#set-day1').value, 10), parseInt($('#set-day2').value, 10), N);
+}
+
+function hasRecordedRounds() {
+  return !!(S.data && S.data.rounds.some(r => r.winner));
+}
+
+/** วงยังไม่เริ่ม (ไม่มีงวดที่บันทึกผล) → เรียงวันที่ใหม่ให้ทันทีที่แก้ค่า ไม่ต้องกดปุ่ม */
+function autoRegenDates() {
+  if (hasRecordedRounds()) { renderDraft(); return; }
+  const N = parseInt($('#set-total').value, 10);
+  if (!(N >= 2 && N <= 100)) return;
+  const gen = generateFromForm(N);
+  if (gen.length) S.draft = gen;
+  renderDraft();
+}
+
+/** เลือกวันงวดแรกแล้ว ตั้ง "ทุกวันที่" ให้ตรงกับวันนั้นอัตโนมัติ (ถ้ายังไม่ตรงกับวันเปียที่ตั้งไว้) */
+function syncDaysFromStart() {
+  const t = parseYmd($('#set-start').value);
+  if (isNaN(t)) return;
+  const day = new Date(t).getUTCDate();
+  const d1 = parseInt($('#set-day1').value, 10), d2 = parseInt($('#set-day2').value, 10);
+  if ($('#set-freq').value === 'twice') {
+    if (day !== d1 && day !== d2) $('#set-day1').value = day;
+  } else {
+    $('#set-day1').value = day;
+  }
+}
+
+function renderDatePreview() {
+  const el = $('#date-preview');
+  if (!el) return;
+  $('#regen-box').classList.toggle('hidden', !hasRecordedRounds());
+  const d = S.draft;
+  if (!d.length || isNaN(parseYmd(d[0]))) { el.innerHTML = '<span class="muted">เลือกวันเปียงวดแรกก่อน</span>'; return; }
+  const c = countdown(d[0]);
+  const line = (label, s) => `<div class="flex justify-between gap-2"><span class="muted">${label}</span><b>${thDate(s, true)}</b></div>`;
+  el.innerHTML =
+    line('งวดที่ 1', d[0]) +
+    (d[1] ? line('งวดที่ 2', d[1]) : '') +
+    (d.length > 2 ? line('งวดสุดท้าย (งวดที่ ' + d.length + ')', d[d.length - 1]) : '') +
+    (daysBetween(todayBkk(), d[0]) >= 0 ? `<div class="text-xs mt-1 text-violet-600 dark:text-violet-300"><i class="fa-solid fa-hourglass-half"></i> งวดแรก${c.text === 'วันนี้!' ? 'คือวันนี้' : ' ' + c.text}</div>` : '');
 }
 
 function ensureDraftLength() {
@@ -1928,6 +1991,7 @@ function draftWarnings() {
 }
 
 function renderDraft() {
+  renderDatePreview();
   const w = draftWarnings();
   const byRound = (S.M && S.M.byRound) || {};
   const today = todayBkk();
@@ -1943,7 +2007,7 @@ function renderDraft() {
       <span class="text-sm muted w-8">${wd}</span>
       <div class="flex-1 text-right">${bad ? `<span class="text-xs text-rose-500"><i class="fa-solid fa-triangle-exclamation"></i> ${bad}</span>` : tag}</div>
     </div>`;
-  }).join('') : '<p class="text-sm muted py-4 text-center">กรอกข้อมูลวันเปียแล้วกด "สร้างวันที่อัตโนมัติ"</p>';
+  }).join('') : '<p class="text-sm muted py-4 text-center">เลือกวันเปียงวดแรกและความถี่ แล้ววันที่ทุกงวดจะขึ้นที่นี่</p>';
   const n = Object.keys(w).length;
   const valid = S.draft.filter(x => !isNaN(parseYmd(x)));
   $('#draft-summary').innerHTML = S.draft.length
@@ -1952,10 +2016,18 @@ function renderDraft() {
     : '';
 }
 
+/** สวิตช์ "งวดแรกเปียไปแล้ว": ปิด = ซ่อนช่องกรอก และงวดแรกยังไม่มีผู้เปีย */
+function syncFirstFields() {
+  const on = $('#set-first-done').checked;
+  $('#first-fields').classList.toggle('hidden', !on);
+  $('#first-off-hint').classList.toggle('hidden', on);
+}
+
 function readSettingsForm() {
   const num = id => { const v = $('#' + id).value.trim(); return v === '' ? NaN : Number(v); };
-  const myHand = parseInt($('#set-first-myhand').value, 10) || 0;
-  let firstWinner = $('#set-first-winner').value.trim();
+  const firstDone = $('#set-first-done').checked;
+  const myHand = firstDone ? parseInt($('#set-first-myhand').value, 10) || 0 : 0;
+  let firstWinner = firstDone ? $('#set-first-winner').value.trim() : '';
   if (!firstWinner && myHand) firstWinner = 'ฉัน (มือ ' + myHand + ')';
   return {
     circleName: $('#set-name').value.trim(),
@@ -1968,7 +2040,8 @@ function readSettingsForm() {
     day2: num('set-day2'),
     startDate: $('#set-start').value,
     firstWinner,
-    firstBid: $('#set-first-bid').value.trim() === '' ? 0 : Number($('#set-first-bid').value),
+    firstDone,
+    firstBid: !firstDone || $('#set-first-bid').value.trim() === '' ? 0 : Number($('#set-first-bid').value),
     firstMyHand: myHand
   };
 }
@@ -1986,7 +2059,8 @@ function validateSettingsForm(f) {
   if (!int(f.day1) || f.day1 < 1 || f.day1 > 31) e['set-day1'] = 'วันที่ 1–31';
   if (f.frequency === 'twice' && (!int(f.day2) || f.day2 < 1 || f.day2 > 31 || f.day2 === f.day1)) e['set-day2'] = '1–31 และไม่ซ้ำวันแรก';
   if (isNaN(parseYmd(f.startDate))) e['set-start'] = 'เลือกวันเริ่ม';
-  if (!(f.firstBid >= 0)) e['set-first-bid'] = 'ต้องเป็น 0 ขึ้นไป';
+  if (f.firstDone && !f.firstWinner) e['set-first-winner'] = 'กรอกชื่อผู้ได้งวดแรก (หรือปิดสวิตช์ถ้ายังไม่เปีย)';
+  if (f.firstDone && !(f.firstBid >= 0)) e['set-first-bid'] = 'ต้องเป็น 0 ขึ้นไป';
   return e;
 }
 
@@ -2032,11 +2106,14 @@ async function saveSettingsFlow() {
   ensureDraftLength();
   if (S.draft.length !== f.totalHands || S.draft.some(x => isNaN(parseYmd(x)))) {
     renderDraft();
-    showError('ยังมีงวดที่ไม่มีวันที่ กด "สร้างวันที่อัตโนมัติ" หรือกรอกวันที่ให้ครบ');
+    showError('ยังมีงวดที่ไม่มีวันที่ ตรวจวันเปียงวดแรกและความถี่ หรือกรอกวันที่ในตารางให้ครบ');
     return;
   }
   const w = draftWarnings();
   if (Object.keys(w).length && !(await confirmBox('วันที่บางงวดไม่เรียงกัน', 'ตรวจพบ ' + Object.keys(w).length + ' งวดที่วันที่ซ้ำหรือย้อนกลับ ต้องการบันทึกต่อไหม?', 'บันทึกต่อ', 'warning'))) return;
+  const r1 = S.data && S.data.rounds.find(r => r.round === 1);
+  if (r1 && r1.winner && !f.firstDone &&
+    !(await confirmBox('ล้างผลงวดแรก?', 'งวดแรกบันทึกไว้ว่า "' + r1.winner + '" ปิดสวิตช์แล้วผลนี้จะถูกลบ', 'ล้างผล', 'warning'))) return;
   const wasConfigured = S.data && S.data.settings.configured;
   if (wasConfigured && !(await confirmBox('บันทึกการตั้งค่า?', 'ตัวเลขคาดการณ์ทั้งหมดจะคำนวณใหม่ตามค่าที่ตั้ง', 'บันทึก'))) return;
   const btn = $('#btn-save-settings');
@@ -2258,7 +2335,7 @@ document.addEventListener('click', e => {
   const sh = t.closest('[data-sim-hands]');
   if (sh) { setSimHands(+sh.dataset.simHands); return; }
   const fq = t.closest('[data-freq]');
-  if (fq) { setFreq(fq.dataset.freq); S.settingsDirty = true; return; }
+  if (fq) { setFreq(fq.dataset.freq); S.settingsDirty = true; autoRegenDates(); return; }
   const pl = t.closest('[data-plan-load]');
   if (pl) { loadPlan(pl.dataset.planLoad); return; }
   const pd = t.closest('[data-plan-del]');
@@ -2282,8 +2359,11 @@ document.addEventListener('input', e => {
   }
   if (t.closest('#settings-form')) {
     S.settingsDirty = true;
-    if (t.id === 'set-total') { ensureDraftLength(); renderDraft(); }
+    if (t.id === 'set-start') { syncDaysFromStart(); autoRegenDates(); }
+    if (t.id === 'set-day1' || t.id === 'set-day2') autoRegenDates();
+    if (t.id === 'set-total') { if (hasRecordedRounds()) { ensureDraftLength(); renderDraft(); } else autoRegenDates(); }
     if (t.id === 'set-myhands') fillFirstHandSelect(parseInt($('#set-first-myhand').value, 10) || 0);
+    if (t.id === 'set-first-done') syncFirstFields();
     return;
   }
   if (['fill-min', 'fill-max', 'fill-step'].indexOf(t.id) >= 0) renderFillLevels();
