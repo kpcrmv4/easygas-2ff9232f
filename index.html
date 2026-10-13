@@ -819,6 +819,10 @@ function money(n) { return (Number(n) || 0).toLocaleString('th-TH', { maximumFra
 function signed(n) { n = Number(n) || 0; return (n > 0 ? '+' : n < 0 ? '−' : '') + money(Math.abs(n)); }
 function plClass(n) { return n > 0 ? 'text-emerald-500' : n < 0 ? 'text-rose-500' : 'muted'; }
 function isDark() { return document.documentElement.classList.contains('dark'); }
+/** ต่อข้อความหลายท่อนด้วย " · " โดยแต่ละท่อนไม่ถูกตัดกลางคำ — จอเล็กจะขึ้นบรรทัดใหม่ทีละท่อน */
+function phrases(list) {
+  return list.map((t, i) => `<span class="inline-block whitespace-nowrap">${i ? '<span class="opacity-60 mx-1">·</span>' : ''}${esc(t)}</span>`).join('');
+}
 function normName(n) { return String(n || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
 
 function parseYmd(s) {
@@ -1293,6 +1297,7 @@ function renderLoadError(msg) {
 
 // ================================================================ render: home
 function statCard(o) {
+  if (o.sub && !/[<>]/.test(o.sub) && o.sub.indexOf(' · ') >= 0) o.sub = phrases(o.sub.split(' · '));
   return `<div class="card p-4 flex flex-col gap-1.5 min-h-[136px] fade-in">
     <div class="flex items-center justify-between gap-2">
       <span class="w-10 h-10 rounded-2xl grid place-items-center ${o.tone}"><i class="fa-solid ${o.icon}"></i></span>
@@ -1423,8 +1428,8 @@ function renderHome() {
           <button type="button" data-action="explain" class="w-6 h-6 rounded-full bg-white/20 grid place-items-center text-xs" aria-label="วิธีคิด"><i class="fa-solid fa-info"></i></button>
         </div>
         <div class="text-4xl md:text-5xl font-bold mt-1 tracking-tight"><span data-count="${M.proj.totalNet}" data-signed="1">0</span> <span class="text-lg font-medium">บาท</span></div>
-        <div class="text-sm text-white/85 mt-1">สุทธิถึงวันนี้ ${signed(M.toDate)} บาท · จ่ายแล้ว ${money(M.paidToDate)} · รับแล้ว ${money(M.recvToDate)}</div>
-        ${assumed.length ? `<div class="text-xs text-white/75 mt-1">สมมติมือที่ยังไม่เปียได้งวด ${assumed.join(', ')} · งวดที่ยังไม่ถึงดอก ${money(s.minBid)} — แตะ <i class="fa-solid fa-info"></i> ดูวิธีคิด</div>` : ''}
+        <div class="text-sm text-white/85 mt-1">${phrases(['สุทธิถึงวันนี้ ' + signed(M.toDate) + ' บาท', 'จ่ายแล้ว ' + money(M.paidToDate), 'รับแล้ว ' + money(M.recvToDate)])}</div>
+        ${assumed.length ? `<div class="text-xs text-white/75 mt-1">${phrases(['สมมติมือที่ยังไม่เปียได้งวด ' + assumed.join(', '), 'งวดที่ยังไม่ถึงดอก ' + money(s.minBid)])}</div>` : ''}
         <div class="mt-4 flex items-center gap-3">
           <div class="flex-1 h-2.5 rounded-full bg-white/25 overflow-hidden"><div class="h-full rounded-full bg-white" style="width:${(pct * 100).toFixed(1)}%"></div></div>
           <span class="text-sm font-semibold">งวด ${done}/${N}</span>
